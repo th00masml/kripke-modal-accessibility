@@ -1,0 +1,20 @@
+﻿#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$ROOT_DIR"
+
+PY=".venv/bin/python"
+if [[ ! -x "$PY" ]]; then
+  echo "Missing .venv/bin/python. Create the virtualenv and install requirements first."
+  exit 1
+fi
+
+"$PY" src/fixtures.py
+"$PY" src/constraint.py
+echo "WARNING: running with --skip-constrained (constrained arms will be absent in outputs)."
+"$PY" src/run.py --skip-constrained
+"$PY" src/score.py
+"$PY" src/report.py
+
+echo "done: outputs/raw.jsonl outputs/scored.jsonl outputs/summary.json RESULTS.md"
