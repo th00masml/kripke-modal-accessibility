@@ -1,4 +1,4 @@
-﻿"""Run five-arm modal judgement generation on local MLX models."""
+﻿"""Run five-arm modal judgement generation on local HF models via CUDA/PyTorch."""
 from __future__ import annotations
 
 import argparse
@@ -7,12 +7,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
 
-import mlx.core as mx
-from mlx_lm import load
-from mlx_lm.generate import generate_step
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer, LogitsProcessorList
 
 from constraint import JudgementSetConstraint
-from mlx_binding import JudgementSetLogitsProcessor, vocabulary_bytes
+from torch_binding import JudgementSetLogitsProcessor, vocabulary_bytes
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "data" / "fixtures.jsonl"
@@ -20,11 +19,13 @@ OUT = ROOT / "outputs" / "raw.jsonl"
 RUN_META = ROOT / "outputs" / "run_meta.json"
 
 MODELS = [
-    "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
-    "mlx-community/Qwen2.5-1.5B-Instruct-4bit",
+    "Qwen/Qwen2.5-0.5B-Instruct",
+    "Qwen/Qwen2.5-1.5B-Instruct",
 ]
 
 ARMS = ["naive", "prompted", "constrained", "prompt_tuned", "constrained_tuned"]
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 @dataclass(frozen=True)
@@ -45,7 +46,7 @@ def read_jsonl(path: Path) -> list[dict]:
 
 
 def encode(tokenizer, text: str) -> list[int]:
-    if getattr(tokenizer, "has_chat_template", False):
+    if tokenizer.chat_template:
         text = tokenizer.apply_chat_template(
             [{"role": "user", "content": text}],
             tokenize=False,
@@ -104,6 +105,8 @@ def main() -> None:
                 "fixture_count": len(fixtures),
                 "overwrite": bool(args.overwrite),
                 "limit": args.limit,
+                "backend": "torch",
+                "device": DEVICE,
             },
             indent=2,
         )
@@ -126,9 +129,16 @@ def main() -> None:
     OUT.parent.mkdir(parents=True, exist_ok=True)
     with OUT.open("a") as out:
         for model_name in args.models:
-            model, tokenizer = load(model_name)
+            tokenizer = AutoTokenizer.from_pretrained(model_name)
+            model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                dtype=torch.bfloat16 if DEVICE == "cuda" else torch.float32,
+            ).to(DEVICE)
+            model.eval()
+
             token_bytes = vocabulary_bytes(tokenizer)
-            eos_ids = tokenizer.eos_token_ids
+            eos_ids = tokenizer.eos_token_id
+            eos_ids = [eos_ids] if isinstance(eos_ids, int) else list(eos_ids)
             constraint = JudgementSetConstraint(allowed_set, token_bytes)
 
             for item in fixtures:
@@ -139,34 +149,38 @@ def main() -> None:
 
                     prompt = build_prompt(item, arm)
                     p_tokens = encode(tokenizer, prompt)
+                    input_ids = torch.tensor([p_tokens], device=DEVICE)
 
                     processor = None
-                    kwargs = {"max_tokens": 64}
+                    logits_processors = None
                     if arm in {"constrained", "constrained_tuned"}:
                         processor = JudgementSetLogitsProcessor(
                             constraint=constraint,
                             prompt_length=len(p_tokens),
-                            prompt_tokens=p_tokens,
                             eos_token_ids=eos_ids,
                             allow_empty_output=not item["present"],
                         )
-                        kwargs["logits_processors"] = [processor]
+                        logits_processors = LogitsProcessorList([processor])
 
                     start = perf_counter()
-                    tokens = []
-                    for token, _ in generate_step(mx.array(p_tokens), model, **kwargs):
-                        token = int(token)
-                        if token in eos_ids:
-                            break
-                        tokens.append(token)
+                    with torch.no_grad():
+                        generated = model.generate(
+                            input_ids,
+                            max_new_tokens=64,
+                            do_sample=False,
+                            logits_processor=logits_processors,
+                            eos_token_id=eos_ids,
+                            pad_token_id=tokenizer.pad_token_id or eos_ids[0],
+                        )
                     elapsed = perf_counter() - start
 
-                    output = tokenizer.decode(tokens, skip_special_tokens=True).strip()
+                    new_tokens = generated[0, len(p_tokens):].tolist()
+                    output = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
 
-                    if processor and processor.trace and all(step.get("generated_len", 0) == 0 for step in processor.trace):
+                    if processor and processor.trace and all(step.get("generated_len", 0) == 0 for step in processor.trace[1:]):
                         raise RuntimeError(
-                            "Constrained decoding aborted: MLX logits processor did not receive generated-token context "
-                            "(generated_len=0 for all steps). Constrained-arm results would be invalid."
+                            "Constrained decoding aborted: logits processor did not receive generated-token context "
+                            "past step 0. Constrained-arm results would be invalid."
                         )
 
                     rec = {
@@ -187,6 +201,10 @@ def main() -> None:
                     out.write(json.dumps(rec) + "\n")
                     out.flush()
                     print(f"{model_name} {arm} {item['id']} -> {output!r}")
+
+            del model
+            if DEVICE == "cuda":
+                torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":

@@ -12,8 +12,7 @@ fi
 
 "$PY" src/fixtures.py
 "$PY" src/constraint.py
-echo "WARNING: running with --skip-constrained (constrained arms will be absent in outputs)."
-"$PY" src/run.py --skip-constrained
+"$PY" src/run.py
 "$PY" src/score.py
 "$PY" src/report.py
 

@@ -1,41 +1,37 @@
-﻿"""Apple MLX binding for judgement-set constrained decoding."""
+﻿"""CUDA/PyTorch (transformers) binding for judgement-set constrained decoding.
+
+Unlike the MLX processor, transformers.LogitsProcessor receives the full
+input_ids sequence (prompt + generated-so-far) on every call, so generated
+token context is always available without reconstruction heuristics.
+"""
 from __future__ import annotations
 
 from time import perf_counter_ns
 
-import mlx.core as mx
+import torch
+from transformers import LogitsProcessor
 
 from constraint import JudgementSetConstraint
 
 
-class JudgementSetLogitsProcessor:
+class JudgementSetLogitsProcessor(LogitsProcessor):
     def __init__(
         self,
         constraint: JudgementSetConstraint,
         prompt_length: int,
-        prompt_tokens: list[int],
         eos_token_ids: list[int],
         allow_empty_output: bool,
     ):
         self.constraint = constraint
         self.prompt_length = prompt_length
-        self.prompt_tokens = tuple(int(token) for token in prompt_tokens)
         self.eos_token_ids = set(eos_token_ids)
         self.allow_empty_output = allow_empty_output
         self.elapsed_ns = 0
         self.trace: list[dict[str, int]] = []
 
-    def __call__(self, tokens: mx.array, logits: mx.array) -> mx.array:
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
         started = perf_counter_ns()
-        token_seq = tokens.tolist()
-        if token_seq and isinstance(token_seq[0], list):
-            token_seq = token_seq[0]
-
-        token_seq = [int(token) for token in token_seq]
-        if len(token_seq) >= self.prompt_length and tuple(token_seq[: self.prompt_length]) == self.prompt_tokens:
-            generated = token_seq[self.prompt_length :]
-        else:
-            generated = token_seq
+        generated = [int(t) for t in input_ids[0, self.prompt_length :].tolist()]
 
         prefix = b"".join(self.constraint.token_bytes.get(token, b"") for token in generated)
         allowed = set(self.constraint.allowed(prefix))
@@ -57,23 +53,21 @@ class JudgementSetLogitsProcessor:
         self.trace.append(
             {
                 "allowed": len(allowed),
-                "vocab": logits.shape[-1],
+                "vocab": scores.shape[-1],
                 "generated_len": len(generated),
                 "prefix_bytes": len(prefix),
             }
         )
-        masked = mx.full(logits.shape, -float("inf"), dtype=logits.dtype)
-        idx = mx.array(sorted(allowed), dtype=mx.uint32)
-        if len(logits.shape) == 1:
-            masked[idx] = 0
-        else:
-            masked[0, idx] = 0
+
+        masked = torch.full_like(scores, float("-inf"))
+        idx = torch.tensor(sorted(allowed), dtype=torch.long, device=scores.device)
+        masked[0, idx] = scores[0, idx]
         self.elapsed_ns += perf_counter_ns() - started
-        return logits + masked
+        return masked
 
 
 def vocabulary_bytes(tokenizer) -> dict[int, bytes]:
     return {
         token_id: tokenizer.decode([token_id], skip_special_tokens=False).encode("utf-8")
-        for token_id in range(tokenizer.vocab_size)
+        for token_id in range(len(tokenizer))
     }

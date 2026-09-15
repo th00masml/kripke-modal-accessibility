@@ -22,13 +22,11 @@ python3.13 -m venv .venv
 
 ./progress.sh
 
-This currently runs unconstrained arms only (`--skip-constrained`) until
-backend token-context support is available for valid constrained decoding.
-
-Important: when `--skip-constrained` is used, constrained and
-constrained_tuned are omitted from outputs and reports. Missing rows mean
-"not run", not a measured zero.
-For publication use, treat this as partial coverage and report it explicitly.
+This runs all five arms, including constrained and constrained_tuned, on a
+CUDA GPU via transformers. transformers'' `LogitsProcessor` receives the full
+`input_ids` sequence (prompt + generated-so-far) on every decoding step, so
+trie-state advancement for constrained decoding has valid token-prefix
+context - unlike the earlier MLX-based path (see below).
 
 3. Artifacts
 
@@ -41,20 +39,23 @@ For publication use, treat this as partial coverage and report it explicitly.
 
 This benchmark probes the gap between formal output validity and true semantic correctness in Kripke models.
 
-## Current limitation
+## Backend history
 
-Constrained arms require stateful token-prefix visibility in the logits processor.
-With the current MLX generation path used here, generated-token context may not
-be exposed to the processor, which invalidates trie-state advancement.
-The runner therefore aborts constrained runs in that state instead of emitting
-misleading constrained metrics.
+This project originally targeted Apple MLX (`mlx-lm`) for local inference.
+On that backend, generated-token context was not reliably exposed to the
+logits processor across decoding steps, which invalidated trie-state
+advancement for constrained arms; runs were limited to `--skip-constrained`.
+The project has since moved to a CUDA/PyTorch (`transformers`) backend,
+which resolves this because `LogitsProcessor.__call__` always receives the
+full `input_ids` tensor.
 
 ## Constrained context diagnostic test
 
-To verify whether the MLX logits processor receives growing generated-token
+To verify whether the logits processor receives growing generated-token
 context (required by trie-state constrained decoding), run:
 
 .venv/bin/python src/test_constrained_context.py
 
 The script returns PASS only when processor trace shows non-zero generated
-prefix length on at least one call; otherwise it fails with an explicit error.
+prefix length on at least one call after step 0; otherwise it fails with an
+explicit error.
