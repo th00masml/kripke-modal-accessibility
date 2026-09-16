@@ -35,19 +35,19 @@ class JudgementSetLogitsProcessor(LogitsProcessor):
 
         prefix = b"".join(self.constraint.token_bytes.get(token, b"") for token in generated)
         allowed = set(self.constraint.allowed(prefix))
+        can_stop = self.allow_empty_output or (len(generated) > 0 and self.constraint.accepts(prefix))
 
-        # If no continuation is possible, avoid producing an all -inf mask and
-        # resynchronize from root frontier.
-        if not allowed:
+        # If no continuation is possible and we have not reached a valid
+        # terminal string, resynchronize from root frontier. Do NOT resync
+        # once a canonical judgement is complete, or generation never stops.
+        if not allowed and not can_stop:
             generated = []
             prefix = b""
             allowed = set(self.constraint.allowed(prefix))
 
         # For in-language fixtures we do not allow immediate abstention.
         # EOS is admitted only after reaching a terminal canonical string.
-        if self.allow_empty_output:
-            allowed |= self.eos_token_ids
-        elif len(generated) > 0 and self.constraint.accepts(prefix):
+        if can_stop:
             allowed |= self.eos_token_ids
 
         self.trace.append(
