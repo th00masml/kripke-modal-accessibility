@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
@@ -12,6 +13,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, LogitsProcessorLis
 
 from constraint import JudgementSetConstraint
 from torch_binding import JudgementSetLogitsProcessor, vocabulary_bytes
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "data" / "fixtures.jsonl"
