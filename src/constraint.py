@@ -47,7 +47,7 @@ class JudgementSetConstraint:
             for token_id, piece in self.by_first[first]:
                 cursor = child
                 for byte in piece[1:]:
-                    cursor = cursor.children.get(byte) if cursor else None
+                    cursor = cursor.children.get(byte) if isinstance(cursor, Node) else None
                     if cursor is None:
                         break
                 if cursor is not None:
