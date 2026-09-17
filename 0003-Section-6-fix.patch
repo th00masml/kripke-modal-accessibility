@@ -1,0 +1,47 @@
+From 963f87eee123a1c1bfdd9e6b3e2badf4d72ffacb Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bart=C5=82omiej=20Nawara?= <barteknawara@gmail.com>
+Date: Thu, 17 Sep 2026 22:56:07 +0000
+Subject: [PATCH] Section 6: 1.5B forced-25 result is coincidence, not
+ confirmation; its departures from FALSE are all on the conjunction and wrong
+ 8/9
+
+---
+ paper/main.tex     | 2 +-
+ results_stating.md | 8 +++++++-
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/paper/main.tex b/paper/main.tex
+index a66865d..054327d 100644
+--- a/paper/main.tex
++++ b/paper/main.tex
+@@ -173,7 +173,7 @@ Model & Arm & gold & product & gold & product & product & old free \\
+ \end{tabular}
+ \end{table}
+ 
+-The prediction holds to the fixture. Constrained exact-match falls from 51 to 36 (0.5B) and from 52 to 37 (1.5B). On the 55 fixtures where the leak never applied, the constrained outputs of both models are byte-identical across runs, and the accuracy is the same 26/55 and 27/55. On the 25 formerly forced fixtures, accuracy falls from 25/25 to 10/25 in both models, which is what the model's constant truth value earns there (10 of those 25 are TRUE in gold, and the 0.5B model says TRUE). Overall constrained accuracy under the leak-free set is 36/80 and 37/80, binomial $p$ against 0.5 of 0.43 and 0.58. The pipeline's McNemar test still returns $p=0.004$ and $p=5\times10^{-10}$ in favour of the constraint, because the prompted arm is still scored on strict format; the free-set comparison between lenient prompted and constrained is 0 versus 7 (0.5B) and 3 versus 4 (1.5B) discordant fixtures.
++The prediction holds to the fixture. Constrained exact-match falls from 51 to 36 (0.5B) and from 52 to 37 (1.5B). On the 55 fixtures where the leak never applied, the constrained outputs of both models are byte-identical across runs, and the accuracy is the same 26/55 and 27/55. On the 25 formerly forced fixtures, accuracy falls from 25/25 to 10/25 in both models. For the 0.5B model that is exactly what a constant TRUE earns: 10 of the 25 are TRUE in gold, and it says TRUE on all 25. For the 1.5B model the coincidence is misleading. A constant FALSE would earn 15 there; the model says FALSE on 20 and TRUE on 5, and all five departures are wrong. Over all 80 in-language fixtures it departs from FALSE nine times and is right once. Every one of the nine is a $\Box p\wedge\Dia q$ fixture, the formula that is FALSE in 18 of 20 cases. When this model leaves its constant, it does so on the conjunction and gets it wrong 8 times in 9. The tuned variant departs three times, all wrong, hence its 12/25. Overall constrained accuracy under the leak-free set is 36/80 and 37/80, binomial $p$ against 0.5 of 0.43 and 0.58. The pipeline's McNemar test still returns $p=0.004$ and $p=5\times10^{-10}$ in favour of the constraint, because the prompted arm is still scored on strict format; the free-set comparison between lenient prompted and constrained is 0 versus 7 (0.5B) and 3 versus 4 (1.5B) discordant fixtures.
+ 
+ Two things the replication adds that the re-analysis could not. The 0.5B model, freed from the leak, says TRUE on 80 of 80 in-language fixtures under the constraint, which is exactly what it says without the constraint (Section~\ref{sec:bias}); the 15 FALSE answers in the gold run were all forced. And the unconstrained arms are not perfectly reproducible between the two runs: 7 to 36 of 160 outputs per arm differ, with lenient exact-match moving by at most 4 of 80 (1.5B prompted, 40 to 36). Greedy decoding in bfloat16 is deterministic on one machine and one load order, and not across a model reload with a different second model resident; we treat differences of this size as run noise, and note that the constrained outputs on the free set showed none of it.
+ 
+diff --git a/results_stating.md b/results_stating.md
+index 06ec8bc..c92f040 100644
+--- a/results_stating.md
++++ b/results_stating.md
+@@ -119,7 +119,13 @@ Same machine, same seeds, greedy. `src/analysis_paper.py --run product`.
+ | 1.5B | constrained_tuned | 52 -> 38 | 25 -> 12 | 26 | 54/55 |
+ 
+ Exactly the predicted ~15-point drop, all of it on the formerly forced
+-fixtures; byte-identical outputs where the leak never applied. Under the
++fixtures; byte-identical outputs where the leak never applied.
++
++The 10/25 on the 1.5B model is a coincidence, not a confirmation: a constant
++FALSE would earn 15 there. The model says FALSE on 20 and TRUE on 5, and all
++five departures are wrong. Over all 80 in-language fixtures it departs from
++FALSE nine times, all on `AND(BOX(p),DIA(q))`, and is right once. Its
++deviations from the constant are anti-correlated with truth. Under the
+ leak-free set constrained accuracy is 36/80 and 37/80 (binomial p vs 0.5:
+ 0.43, 0.58). The 0.5B model now says TRUE on 80/80 under the constraint; the
+ 15 FALSE answers in the gold run were all forced. The pipeline's McNemar
+-- 
+2.43.0
+
