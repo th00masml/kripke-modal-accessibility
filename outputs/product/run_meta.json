@@ -1,0 +1,28 @@
+{
+  "models": [
+    "Qwen/Qwen2.5-0.5B-Instruct",
+    "Qwen/Qwen2.5-1.5B-Instruct"
+  ],
+  "all_arms": [
+    "naive",
+    "prompted",
+    "constrained",
+    "prompt_tuned",
+    "constrained_tuned"
+  ],
+  "active_arms": [
+    "naive",
+    "prompted",
+    "constrained",
+    "prompt_tuned",
+    "constrained_tuned"
+  ],
+  "skip_constrained": false,
+  "fixture_count": 160,
+  "overwrite": false,
+  "limit": null,
+  "backend": "torch",
+  "device": "cuda",
+  "allowed_set": "product",
+  "note": "replication run 2026-09-17, --allowed-set product"
+}

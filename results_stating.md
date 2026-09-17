@@ -68,8 +68,9 @@ Of the 51-52 exact matches credited to constrained decoding, 25 come from
 the constraint set and the rest are chance.
 
 Fix: `run.py --allowed-set product` builds the full world x formula x truth
-set (32 strings). **Not re-run**; the cached run used `gold`
-(`outputs/run_meta.json` now records this).
+set (32 strings). **Re-run on 2026-09-17**, see "Replication" below. The
+original run is archived in `outputs/gold/`, the replication in
+`outputs/product/`; each has its own `run_meta.json` naming the set.
 
 **2. The truth value is a constant per model.** On the 55 free fixtures the
 0.5B model emits TRUE 55/55 under the constraint (80/80 in-language under
@@ -106,7 +107,29 @@ model was going to emit. The "prompted vs constrained" McNemar test above
 compares a coin that always lands in the admissible set against outputs
 discarded for an underscore.
 
+## Replication with the leak-free set (2026-09-17, `--allowed-set product`)
+
+Same machine, same seeds, greedy. `src/analysis_paper.py --run product`.
+
+| model | arm | exact gold -> product | old forced (25) gold -> product | old free (55) product | constrained outputs identical on old free |
+|---|---|---:|---:|---:|---:|
+| 0.5B | constrained | 51 -> 36 | 25 -> 10 | 26 | 55/55 |
+| 0.5B | constrained_tuned | 51 -> 36 | 25 -> 10 | 26 | 55/55 |
+| 1.5B | constrained | 52 -> 37 | 25 -> 10 | 27 | 55/55 |
+| 1.5B | constrained_tuned | 52 -> 38 | 25 -> 12 | 26 | 54/55 |
+
+Exactly the predicted ~15-point drop, all of it on the formerly forced
+fixtures; byte-identical outputs where the leak never applied. Under the
+leak-free set constrained accuracy is 36/80 and 37/80 (binomial p vs 0.5:
+0.43, 0.58). The 0.5B model now says TRUE on 80/80 under the constraint; the
+15 FALSE answers in the gold run were all forced. The pipeline's McNemar
+still favours the constraint (0 vs 9, p=0.004; 0 vs 32, p=5e-10) for the
+same format reason as before.
+
+Unconstrained arms are not bit-reproducible across the two runs: 7-36 of
+160 outputs per arm differ, lenient exact-match moves by at most 4/80
+(1.5B prompted 40 -> 36). Treated as run noise.
+
 ## Not tested
 
-- Leak-free admissible set (`--allowed-set product`): implemented, not run.
 - Balanced truth values per formula, few-shot, chain-of-thought, models > 1.5B.

@@ -1,0 +1,53 @@
+{
+ "total": 1600,
+ "by_model_arm": {
+  "Qwen/Qwen2.5-0.5B-Instruct::naive": {
+   "invented_schema": 159,
+   "valid_wrong_judgement": 1
+  },
+  "Qwen/Qwen2.5-0.5B-Instruct::prompted": {
+   "valid_wrong_judgement": 25,
+   "exact": 27,
+   "invented_schema": 108
+  },
+  "Qwen/Qwen2.5-0.5B-Instruct::constrained": {
+   "valid_wrong_judgement": 44,
+   "exact": 36,
+   "valid_spurious_judgement": 80
+  },
+  "Qwen/Qwen2.5-0.5B-Instruct::prompt_tuned": {
+   "valid_wrong_judgement": 22,
+   "invented_schema": 119,
+   "exact": 19
+  },
+  "Qwen/Qwen2.5-0.5B-Instruct::constrained_tuned": {
+   "valid_wrong_judgement": 44,
+   "exact": 36,
+   "valid_spurious_judgement": 80
+  },
+  "Qwen/Qwen2.5-1.5B-Instruct::naive": {
+   "exact": 25,
+   "valid_wrong_judgement": 33,
+   "invented_schema": 102
+  },
+  "Qwen/Qwen2.5-1.5B-Instruct::prompted": {
+   "invented_schema": 147,
+   "valid_wrong_judgement": 8,
+   "exact": 5
+  },
+  "Qwen/Qwen2.5-1.5B-Instruct::constrained": {
+   "exact": 37,
+   "valid_wrong_judgement": 43,
+   "valid_spurious_judgement": 80
+  },
+  "Qwen/Qwen2.5-1.5B-Instruct::prompt_tuned": {
+   "invented_schema": 160
+  },
+  "Qwen/Qwen2.5-1.5B-Instruct::constrained_tuned": {
+   "exact": 38,
+   "valid_wrong_judgement": 42,
+   "valid_spurious_judgement": 80
+  }
+ },
+ "note": "derived from scored.jsonl uploaded by the author; full summary.json from score.py should replace this"
+}

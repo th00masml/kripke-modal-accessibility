@@ -1,0 +1,619 @@
+{
+ "run": "product",
+ "allowed_set_mode": "product",
+ "allowed_set_size": 32,
+ "forced_fixtures": 0,
+ "free_fixtures": 80,
+ "forced_pairs": [],
+ "per_model": {
+  "Qwen/Qwen2.5-0.5B-Instruct": {
+   "naive": {
+    "strict_exact": 0,
+    "strict_ci": [
+     0.0,
+     0.0
+    ],
+    "lenient_parsed": 1,
+    "lenient_exact": 0,
+    "lenient_ci": [
+     0.0,
+     0.0
+    ],
+    "world_formula_right": 1,
+    "truth_right_given_wf": [
+     0,
+     1
+    ],
+    "free_exact": 0,
+    "free_n": 80,
+    "free_binom_p_vs_chance": 4.3739781822391746e-13,
+    "forced_exact": 0,
+    "forced_n": 0,
+    "in_language_exact_lenient_ci": [
+     0.0,
+     0.0
+    ],
+    "truth_pred_dist": {
+     "none": 79,
+     "TRUE": 1
+    },
+    "per_formula_lenient": {
+     "BOX(p)": [
+      0,
+      20
+     ],
+     "DIA(q)": [
+      0,
+      20
+     ],
+     "NOT(BOX(NOT(p)))": [
+      0,
+      20
+     ],
+     "AND(BOX(p),DIA(q))": [
+      0,
+      20
+     ]
+    },
+    "absent_empty": 0,
+    "absent_mentions_r": 54,
+    "absent_canonical_in_language": 0,
+    "mean_elapsed_sec": 0.6920978462499562,
+    "class_counts": {
+     "invented_schema": 159,
+     "valid_wrong_judgement": 1
+    }
+   },
+   "prompted": {
+    "strict_exact": 27,
+    "strict_ci": [
+     0.238,
+     0.438
+    ],
+    "lenient_parsed": 80,
+    "lenient_exact": 29,
+    "lenient_ci": [
+     0.25,
+     0.462
+    ],
+    "world_formula_right": 71,
+    "truth_right_given_wf": [
+     29,
+     71
+    ],
+    "free_exact": 29,
+    "free_n": 80,
+    "free_binom_p_vs_chance": 0.018316097516916315,
+    "forced_exact": 0,
+    "forced_n": 0,
+    "in_language_exact_lenient_ci": [
+     0.25,
+     0.462
+    ],
+    "truth_pred_dist": {
+     "TRUE": 80
+    },
+    "per_formula_lenient": {
+     "BOX(p)": [
+      3,
+      20
+     ],
+     "DIA(q)": [
+      6,
+      20
+     ],
+     "NOT(BOX(NOT(p)))": [
+      18,
+      20
+     ],
+     "AND(BOX(p),DIA(q))": [
+      2,
+      20
+     ]
+    },
+    "absent_empty": 0,
+    "absent_mentions_r": 58,
+    "absent_canonical_in_language": 0,
+    "mean_elapsed_sec": 0.8478765206250699,
+    "class_counts": {
+     "valid_wrong_judgement": 25,
+     "exact": 27,
+     "invented_schema": 108
+    }
+   },
+   "prompt_tuned": {
+    "strict_exact": 19,
+    "strict_ci": [
+     0.15,
+     0.325
+    ],
+    "lenient_parsed": 64,
+    "lenient_exact": 20,
+    "lenient_ci": [
+     0.162,
+     0.338
+    ],
+    "world_formula_right": 54,
+    "truth_right_given_wf": [
+     20,
+     54
+    ],
+    "free_exact": 20,
+    "free_n": 80,
+    "free_binom_p_vs_chance": 8.580559867049611e-06,
+    "forced_exact": 0,
+    "forced_n": 0,
+    "in_language_exact_lenient_ci": [
+     0.162,
+     0.338
+    ],
+    "truth_pred_dist": {
+     "TRUE": 64,
+     "none": 16
+    },
+    "per_formula_lenient": {
+     "BOX(p)": [
+      3,
+      20
+     ],
+     "DIA(q)": [
+      6,
+      20
+     ],
+     "NOT(BOX(NOT(p)))": [
+      10,
+      20
+     ],
+     "AND(BOX(p),DIA(q))": [
+      1,
+      20
+     ]
+    },
+    "absent_empty": 0,
+    "absent_mentions_r": 57,
+    "absent_canonical_in_language": 0,
+    "mean_elapsed_sec": 0.8698133856250564,
+    "class_counts": {
+     "valid_wrong_judgement": 22,
+     "invented_schema": 119,
+     "exact": 19
+    }
+   },
+   "constrained": {
+    "strict_exact": 36,
+    "strict_ci": [
+     0.35,
+     0.55
+    ],
+    "lenient_parsed": 80,
+    "lenient_exact": 36,
+    "lenient_ci": [
+     0.35,
+     0.55
+    ],
+    "world_formula_right": 80,
+    "truth_right_given_wf": [
+     36,
+     80
+    ],
+    "free_exact": 36,
+    "free_n": 80,
+    "free_binom_p_vs_chance": 0.4340422553454787,
+    "forced_exact": 0,
+    "forced_n": 0,
+    "in_language_exact_lenient_ci": [
+     0.35,
+     0.55
+    ],
+    "truth_pred_dist": {
+     "TRUE": 80
+    },
+    "per_formula_lenient": {
+     "BOX(p)": [
+      3,
+      20
+     ],
+     "DIA(q)": [
+      13,
+      20
+     ],
+     "NOT(BOX(NOT(p)))": [
+      18,
+      20
+     ],
+     "AND(BOX(p),DIA(q))": [
+      2,
+      20
+     ]
+    },
+    "absent_empty": 0,
+    "absent_mentions_r": 0,
+    "absent_canonical_in_language": 80,
+    "mean_elapsed_sec": 1.0060201912499678,
+    "class_counts": {
+     "valid_wrong_judgement": 44,
+     "exact": 36,
+     "valid_spurious_judgement": 80
+    }
+   },
+   "constrained_tuned": {
+    "strict_exact": 36,
+    "strict_ci": [
+     0.35,
+     0.55
+    ],
+    "lenient_parsed": 80,
+    "lenient_exact": 36,
+    "lenient_ci": [
+     0.35,
+     0.55
+    ],
+    "world_formula_right": 80,
+    "truth_right_given_wf": [
+     36,
+     80
+    ],
+    "free_exact": 36,
+    "free_n": 80,
+    "free_binom_p_vs_chance": 0.4340422553454787,
+    "forced_exact": 0,
+    "forced_n": 0,
+    "in_language_exact_lenient_ci": [
+     0.35,
+     0.55
+    ],
+    "truth_pred_dist": {
+     "TRUE": 80
+    },
+    "per_formula_lenient": {
+     "BOX(p)": [
+      3,
+      20
+     ],
+     "DIA(q)": [
+      13,
+      20
+     ],
+     "NOT(BOX(NOT(p)))": [
+      18,
+      20
+     ],
+     "AND(BOX(p),DIA(q))": [
+      2,
+      20
+     ]
+    },
+    "absent_empty": 0,
+    "absent_mentions_r": 0,
+    "absent_canonical_in_language": 80,
+    "mean_elapsed_sec": 1.038026506874985,
+    "class_counts": {
+     "valid_wrong_judgement": 44,
+     "exact": 36,
+     "valid_spurious_judgement": 80
+    }
+   },
+   "mcnemar_free_prompted_lenient_vs_constrained": {
+    "prompted_only": 0,
+    "constrained_only": 7,
+    "p": 0.015625
+   },
+   "mcnemar_free_naive_lenient_vs_constrained": {
+    "naive_only": 0,
+    "constrained_only": 36,
+    "p": 2.9103830456733704e-11
+   },
+   "constrained_vs_tuned": {
+    "outputs_differ": 17,
+    "exact_differ": 0
+   }
+  },
+  "Qwen/Qwen2.5-1.5B-Instruct": {
+   "naive": {
+    "strict_exact": 25,
+    "strict_ci": [
+     0.212,
+     0.412
+    ],
+    "lenient_parsed": 78,
+    "lenient_exact": 41,
+    "lenient_ci": [
+     0.412,
+     0.625
+    ],
+    "world_formula_right": 78,
+    "truth_right_given_wf": [
+     41,
+     78
+    ],
+    "free_exact": 41,
+    "free_n": 80,
+    "free_binom_p_vs_chance": 0.9110721212260928,
+    "forced_exact": 0,
+    "forced_n": 0,
+    "in_language_exact_lenient_ci": [
+     0.412,
+     0.625
+    ],
+    "truth_pred_dist": {
+     "FALSE": 74,
+     "TRUE": 4,
+     "none": 2
+    },
+    "per_formula_lenient": {
+     "BOX(p)": [
+      16,
+      20
+     ],
+     "DIA(q)": [
+      7,
+      20
+     ],
+     "NOT(BOX(NOT(p)))": [
+      2,
+      20
+     ],
+     "AND(BOX(p),DIA(q))": [
+      16,
+      20
+     ]
+    },
+    "absent_empty": 0,
+    "absent_mentions_r": 80,
+    "absent_canonical_in_language": 0,
+    "mean_elapsed_sec": 2.5347104281249786,
+    "class_counts": {
+     "exact": 25,
+     "valid_wrong_judgement": 33,
+     "invented_schema": 102
+    }
+   },
+   "prompted": {
+    "strict_exact": 5,
+    "strict_ci": [
+     0.012,
+     0.125
+    ],
+    "lenient_parsed": 77,
+    "lenient_exact": 36,
+    "lenient_ci": [
+     0.35,
+     0.562
+    ],
+    "world_formula_right": 77,
+    "truth_right_given_wf": [
+     36,
+     77
+    ],
+    "free_exact": 36,
+    "free_n": 80,
+    "free_binom_p_vs_chance": 0.4340422553454787,
+    "forced_exact": 0,
+    "forced_n": 0,
+    "in_language_exact_lenient_ci": [
+     0.35,
+     0.562
+    ],
+    "truth_pred_dist": {
+     "FALSE": 70,
+     "TRUE": 7,
+     "none": 3
+    },
+    "per_formula_lenient": {
+     "BOX(p)": [
+      17,
+      20
+     ],
+     "DIA(q)": [
+      7,
+      20
+     ],
+     "NOT(BOX(NOT(p)))": [
+      2,
+      20
+     ],
+     "AND(BOX(p),DIA(q))": [
+      10,
+      20
+     ]
+    },
+    "absent_empty": 0,
+    "absent_mentions_r": 80,
+    "absent_canonical_in_language": 0,
+    "mean_elapsed_sec": 2.862640491875004,
+    "class_counts": {
+     "invented_schema": 147,
+     "valid_wrong_judgement": 8,
+     "exact": 5
+    }
+   },
+   "prompt_tuned": {
+    "strict_exact": 0,
+    "strict_ci": [
+     0.0,
+     0.0
+    ],
+    "lenient_parsed": 71,
+    "lenient_exact": 24,
+    "lenient_ci": [
+     0.2,
+     0.4
+    ],
+    "world_formula_right": 70,
+    "truth_right_given_wf": [
+     24,
+     70
+    ],
+    "free_exact": 24,
+    "free_n": 80,
+    "free_binom_p_vs_chance": 0.0004515172719148107,
+    "forced_exact": 0,
+    "forced_n": 0,
+    "in_language_exact_lenient_ci": [
+     0.2,
+     0.4
+    ],
+    "truth_pred_dist": {
+     "TRUE": 14,
+     "FALSE": 57,
+     "none": 9
+    },
+    "per_formula_lenient": {
+     "BOX(p)": [
+      9,
+      20
+     ],
+     "DIA(q)": [
+      7,
+      20
+     ],
+     "NOT(BOX(NOT(p)))": [
+      2,
+      20
+     ],
+     "AND(BOX(p),DIA(q))": [
+      6,
+      20
+     ]
+    },
+    "absent_empty": 0,
+    "absent_mentions_r": 80,
+    "absent_canonical_in_language": 0,
+    "mean_elapsed_sec": 3.0629307099999865,
+    "class_counts": {
+     "invented_schema": 160
+    }
+   },
+   "constrained": {
+    "strict_exact": 37,
+    "strict_ci": [
+     0.362,
+     0.575
+    ],
+    "lenient_parsed": 80,
+    "lenient_exact": 37,
+    "lenient_ci": [
+     0.362,
+     0.575
+    ],
+    "world_formula_right": 80,
+    "truth_right_given_wf": [
+     37,
+     80
+    ],
+    "free_exact": 37,
+    "free_n": 80,
+    "free_binom_p_vs_chance": 0.5764306261883931,
+    "forced_exact": 0,
+    "forced_n": 0,
+    "in_language_exact_lenient_ci": [
+     0.362,
+     0.575
+    ],
+    "truth_pred_dist": {
+     "FALSE": 71,
+     "TRUE": 9
+    },
+    "per_formula_lenient": {
+     "BOX(p)": [
+      17,
+      20
+     ],
+     "DIA(q)": [
+      7,
+      20
+     ],
+     "NOT(BOX(NOT(p)))": [
+      2,
+      20
+     ],
+     "AND(BOX(p),DIA(q))": [
+      11,
+      20
+     ]
+    },
+    "absent_empty": 0,
+    "absent_mentions_r": 0,
+    "absent_canonical_in_language": 80,
+    "mean_elapsed_sec": 2.9155331556250275,
+    "class_counts": {
+     "exact": 37,
+     "valid_wrong_judgement": 43,
+     "valid_spurious_judgement": 80
+    }
+   },
+   "constrained_tuned": {
+    "strict_exact": 38,
+    "strict_ci": [
+     0.375,
+     0.588
+    ],
+    "lenient_parsed": 80,
+    "lenient_exact": 38,
+    "lenient_ci": [
+     0.375,
+     0.588
+    ],
+    "world_formula_right": 80,
+    "truth_right_given_wf": [
+     38,
+     80
+    ],
+    "free_exact": 38,
+    "free_n": 80,
+    "free_binom_p_vs_chance": 0.7375543089843226,
+    "forced_exact": 0,
+    "forced_n": 0,
+    "in_language_exact_lenient_ci": [
+     0.375,
+     0.588
+    ],
+    "truth_pred_dist": {
+     "FALSE": 72,
+     "TRUE": 8
+    },
+    "per_formula_lenient": {
+     "BOX(p)": [
+      17,
+      20
+     ],
+     "DIA(q)": [
+      7,
+      20
+     ],
+     "NOT(BOX(NOT(p)))": [
+      2,
+      20
+     ],
+     "AND(BOX(p),DIA(q))": [
+      12,
+      20
+     ]
+    },
+    "absent_empty": 0,
+    "absent_mentions_r": 0,
+    "absent_canonical_in_language": 80,
+    "mean_elapsed_sec": 3.2120469187499707,
+    "class_counts": {
+     "exact": 38,
+     "valid_wrong_judgement": 42,
+     "valid_spurious_judgement": 80
+    }
+   },
+   "mcnemar_free_prompted_lenient_vs_constrained": {
+    "prompted_only": 3,
+    "constrained_only": 4,
+    "p": 1.0
+   },
+   "mcnemar_free_naive_lenient_vs_constrained": {
+    "naive_only": 5,
+    "constrained_only": 1,
+    "p": 0.21875
+   },
+   "constrained_vs_tuned": {
+    "outputs_differ": 72,
+    "exact_differ": 5
+   }
+  }
+ }
+}

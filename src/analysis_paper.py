@@ -1,9 +1,14 @@
-"""Recompute every number and figure in the preprint from outputs/scored.jsonl.
-Run from src/:  python analysis_paper.py
-Writes outputs/paper_stats.json and paper/figs/*.pdf. Needs numpy, matplotlib.
-Exploratory re-analysis; the pipeline's own summary is outputs/summary.json."""
+"""Recompute every number and figure in the preprint from a run's scored.jsonl.
+Run from src/:
+  python analysis_paper.py --run gold      # cached 2026-09 run, allowed set = gold judgements (leaky)
+  python analysis_paper.py --run product   # 2026-09-17 replication, allowed set = world x formula x truth
+  python analysis_paper.py                 # whatever is currently in outputs/ (after score.py)
+Reads outputs/<run>/scored.jsonl and run_meta.json, writes outputs/<run>/paper_stats.json and
+paper/figs/<run>_*.pdf. The forced/free split is computed from the admissible set the run
+actually used (run_meta["allowed_set"]). Needs numpy and matplotlib."""
 from __future__ import annotations
 
+import argparse
 import collections
 import json
 import re
@@ -17,7 +22,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "outputs"
+ap = argparse.ArgumentParser()
+ap.add_argument("--run", default=".", help="subdirectory of outputs/ holding scored.jsonl (gold, product, or . for outputs/ itself)")
+ARGS = ap.parse_args()
+OUT = ROOT / "outputs" / ARGS.run
+RUN = "current" if ARGS.run == "." else ARGS.run
 FIGS = ROOT / "paper" / "figs"
 FIGS.mkdir(parents=True, exist_ok=True)
 
@@ -26,7 +35,14 @@ SHORT = {MODELS[0]: "0.5B", MODELS[1]: "1.5B"}
 ARMS = ["naive", "prompted", "prompt_tuned", "constrained", "constrained_tuned"]
 
 fixtures = [json.loads(l) for l in (ROOT / "data" / "fixtures.jsonl").open()]
-allowed = {f["gold"] for f in fixtures if f["present"]}
+run_meta = json.loads((OUT / "run_meta.json").read_text()) if (OUT / "run_meta.json").exists() else {}
+ALLOWED_MODE = run_meta.get("allowed_set", "gold")
+if ALLOWED_MODE == "product":
+    _pres = [f for f in fixtures if f["present"]]
+    allowed = {f"{w} |= {f} iff {t}." for w in sorted({x["world"] for x in _pres})
+               for f in sorted({x["formula"] for x in _pres}) for t in ("TRUE", "FALSE")}
+else:
+    allowed = {f["gold"] for f in fixtures if f["present"]}
 
 
 def flip(s: str) -> str:
@@ -82,6 +98,8 @@ def mcnemar_exact(a: list[bool], b: list[bool]) -> tuple[int, int, float]:
 
 
 STATS: dict = {
+    "run": RUN,
+    "allowed_set_mode": ALLOWED_MODE,
     "allowed_set_size": len(allowed),
     "forced_fixtures": len(forced),
     "free_fixtures": len(free),
@@ -89,7 +107,7 @@ STATS: dict = {
     "per_model": {},
 }
 
-print(f"allowed set = {len(allowed)} strings; forced = {len(forced)}, free = {len(free)}")
+print(f"run={RUN} allowed set mode={ALLOWED_MODE} size={len(allowed)}; forced = {len(forced)}, free = {len(free)}")
 
 for m in MODELS:
     S: dict = {}
@@ -117,6 +135,7 @@ for m in MODELS:
             "truth_right_given_wf": [sum(truth_given_wf), len(truth_given_wf)],
             "free_exact": sum(free_hits), "free_n": len(free), "free_binom_p_vs_chance": binom_two_sided(sum(free_hits), len(free)),
             "forced_exact": sum(forced_hits), "forced_n": len(forced),
+            "in_language_exact_lenient_ci": boot_ci([int(x) for x in len_exact]),
             "truth_pred_dist": dict(truth_pred),
             "per_formula_lenient": {k: v for k, v in per_formula.items()},
             "absent_empty": sum(1 for r in absent_rows if (r["output"] or "").strip() == ""),
@@ -162,7 +181,7 @@ for ax, m in zip(axes, MODELS):
 axes[0].set_ylabel("fixtures (of 160)")
 h, l = axes[0].get_legend_handles_labels()
 fig.legend(h, l, loc="lower center", ncol=3, frameon=False, fontsize=6.5, bbox_to_anchor=(0.5, -0.08))
-fig.tight_layout(); fig.savefig(FIGS / "class_counts.pdf", bbox_inches="tight")
+fig.tight_layout(); fig.savefig(FIGS / f"{RUN}_class_counts.pdf", bbox_inches="tight")
 
 # forced vs free, strict constrained and lenient prompt arms
 fig, axes = plt.subplots(1, 2, figsize=(6.4, 2.6), sharey=True)
@@ -170,28 +189,29 @@ arms_show = ["naive", "prompted", "prompt_tuned", "constrained"]
 for ax, m in zip(axes, MODELS):
     S = STATS["per_model"][m]
     x = np.arange(len(arms_show)); w = 0.36
-    ax.bar(x - w / 2, [S[a]["forced_exact"] / S[a]["forced_n"] for a in arms_show], w, color="#e08a2e", label="forced (n=25): only one truth value in the trie")
-    ax.bar(x + w / 2, [S[a]["free_exact"] / S[a]["free_n"] for a in arms_show], w, color="#2a6fb0", label="free (n=55): both truth values in the trie")
+    nf, nfr = len(forced), len(free)
+    ax.bar(x - w / 2, [S[a]["forced_exact"] / nf if nf else 0 for a in arms_show], w, color="#e08a2e", label=f"forced (n={nf}): only one truth value in the trie")
+    ax.bar(x + w / 2, [S[a]["free_exact"] / nfr for a in arms_show], w, color="#2a6fb0", label=f"free (n={nfr}): both truth values in the trie")
     ax.axhline(0.5, color="k", ls=":", lw=0.8)
     ax.set_xticks(x); ax.set_xticklabels([a.replace("_", "\n") for a in arms_show], fontsize=7)
     ax.set_title(f"Qwen2.5-{SHORT[m]}-Instruct", fontsize=9); ax.set_ylim(0, 1.05)
 axes[0].set_ylabel("semantic accuracy (lenient parse)")
 h, l = axes[0].get_legend_handles_labels()
 fig.legend(h, l, loc="lower center", ncol=1, frameon=False, fontsize=7, bbox_to_anchor=(0.5, -0.12))
-fig.tight_layout(); fig.savefig(FIGS / "forced_vs_free.pdf", bbox_inches="tight")
+fig.tight_layout(); fig.savefig(FIGS / f"{RUN}_forced_vs_free.pdf", bbox_inches="tight")
 
 # truth-value distribution on free fixtures, constrained arm
 fig, ax = plt.subplots(figsize=(4.2, 2.2))
 labels, tv, fv = [], [], []
-gold_free = collections.Counter(gold[i].split("iff ")[1].rstrip(".") for i in free)
-labels.append("gold"); tv.append(gold_free["TRUE"]); fv.append(gold_free["FALSE"])
+gold_all = collections.Counter(gold[i].split("iff ")[1].rstrip(".") for i in present_ids)
+labels.append("gold"); tv.append(gold_all["TRUE"]); fv.append(gold_all["FALSE"])
 for m in MODELS:
     for arm in ["prompted", "constrained"]:
-        cnt = collections.Counter((lenient(R[(m, arm)][i]["output"]) or "none").split("iff ")[-1].rstrip(".") for i in free)
+        cnt = collections.Counter((lenient(R[(m, arm)][i]["output"]) or "none").split("iff ")[-1].rstrip(".") for i in present_ids)
         labels.append(f"{SHORT[m]}\n{arm}"); tv.append(cnt["TRUE"]); fv.append(cnt["FALSE"])
 x = np.arange(len(labels))
 ax.bar(x, tv, color="#2a6fb0", label="TRUE"); ax.bar(x, fv, bottom=tv, color="#e08a2e", label="FALSE")
-ax.set_xticks(x); ax.set_xticklabels(labels, fontsize=7); ax.set_ylabel("free fixtures (n=55)")
+ax.set_xticks(x); ax.set_xticklabels(labels, fontsize=7); ax.set_ylabel("in-language fixtures (n=80)")
 ax.legend(frameon=False, fontsize=7, loc="upper center", bbox_to_anchor=(0.5, -0.32), ncol=2)
-fig.tight_layout(); fig.savefig(FIGS / "truth_value_bias.pdf", bbox_inches="tight")
+fig.tight_layout(); fig.savefig(FIGS / f"{RUN}_truth_value_bias.pdf", bbox_inches="tight")
 print("wrote", OUT / "paper_stats.json", "and figures")

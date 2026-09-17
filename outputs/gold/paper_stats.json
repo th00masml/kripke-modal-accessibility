@@ -1,4 +1,6 @@
 {
+ "run": "gold",
+ "allowed_set_mode": "gold",
  "allowed_set_size": 27,
  "forced_fixtures": 25,
  "free_fixtures": 55,
@@ -53,6 +55,10 @@
     "free_binom_p_vs_chance": 1.5418777365994174e-12,
     "forced_exact": 0,
     "forced_n": 25,
+    "in_language_exact_lenient_ci": [
+     0.0,
+     0.0
+    ],
     "truth_pred_dist": {
      "none": 80
     },
@@ -104,6 +110,10 @@
     "free_binom_p_vs_chance": 0.014453833533827731,
     "forced_exact": 10,
     "forced_n": 25,
+    "in_language_exact_lenient_ci": [
+     0.25,
+     0.45
+    ],
     "truth_pred_dist": {
      "TRUE": 80
     },
@@ -157,6 +167,10 @@
     "free_binom_p_vs_chance": 0.00011361060320691507,
     "forced_exact": 7,
     "forced_n": 25,
+    "in_language_exact_lenient_ci": [
+     0.162,
+     0.338
+    ],
     "truth_pred_dist": {
      "TRUE": 63,
      "none": 17
@@ -211,6 +225,10 @@
     "free_binom_p_vs_chance": 0.7877061896700435,
     "forced_exact": 25,
     "forced_n": 25,
+    "in_language_exact_lenient_ci": [
+     0.525,
+     0.738
+    ],
     "truth_pred_dist": {
      "TRUE": 65,
      "FALSE": 15
@@ -265,6 +283,10 @@
     "free_binom_p_vs_chance": 0.7877061896700435,
     "forced_exact": 25,
     "forced_n": 25,
+    "in_language_exact_lenient_ci": [
+     0.525,
+     0.738
+    ],
     "truth_pred_dist": {
      "TRUE": 65,
      "FALSE": 15
@@ -335,6 +357,10 @@
     "free_binom_p_vs_chance": 0.5900533317766357,
     "forced_exact": 12,
     "forced_n": 25,
+    "in_language_exact_lenient_ci": [
+     0.425,
+     0.638
+    ],
     "truth_pred_dist": {
      "FALSE": 75,
      "TRUE": 4,
@@ -390,6 +416,10 @@
     "free_binom_p_vs_chance": 1.0,
     "forced_exact": 13,
     "forced_n": 25,
+    "in_language_exact_lenient_ci": [
+     0.4,
+     0.612
+    ],
     "truth_pred_dist": {
      "FALSE": 73,
      "TRUE": 5,
@@ -445,6 +475,10 @@
     "free_binom_p_vs_chance": 0.014453833533827731,
     "forced_exact": 7,
     "forced_n": 25,
+    "in_language_exact_lenient_ci": [
+     0.212,
+     0.412
+    ],
     "truth_pred_dist": {
      "TRUE": 16,
      "FALSE": 57,
@@ -498,6 +532,10 @@
     "free_binom_p_vs_chance": 1.0,
     "forced_exact": 25,
     "forced_n": 25,
+    "in_language_exact_lenient_ci": [
+     0.55,
+     0.75
+    ],
     "truth_pred_dist": {
      "FALSE": 66,
      "TRUE": 14
@@ -552,6 +590,10 @@
     "free_binom_p_vs_chance": 1.0,
     "forced_exact": 25,
     "forced_n": 25,
+    "in_language_exact_lenient_ci": [
+     0.538,
+     0.75
+    ],
     "truth_pred_dist": {
      "FALSE": 64,
      "TRUE": 16

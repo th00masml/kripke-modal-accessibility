@@ -33,8 +33,12 @@ context - unlike the earlier MLX-based path (see below).
 - outputs/raw.jsonl
 - outputs/scored.jsonl
 - outputs/summary.json
-- outputs/paper_stats.json  (from src/analysis_paper.py)
 - results_stating.md
+
+Archived runs: `outputs/gold/` (original, allowed set = gold judgements) and
+`outputs/product/` (2026-09-17 replication, allowed set = world x formula x
+truth). `src/analysis_paper.py --run gold|product` recomputes the paper's
+numbers and figures for either.
 
 ## Why this is interesting
 
@@ -50,8 +54,9 @@ fixtures; on the other 55 the constrained arms are at chance (26/55, 27/55);
 each model emits a near-constant truth value in every arm (0.5B: TRUE,
 1.5B: FALSE); and a lenient parser shows the unconstrained 1.5B model already
 had world and formula right on 79/80. Nobody abstains on out-of-language
-fixtures, ever. `run.py --allowed-set product` builds a leak-free admissible
-set; it has not been run yet.
+fixtures, ever. A replication with the leak-free set (`--allowed-set product`)
+drops constrained exact-match to 36/80 and 37/80 and leaves the 55 unaffected
+fixtures byte-identical: `outputs/gold/` vs `outputs/product/`.
 
 ## Preprint
 

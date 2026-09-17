@@ -32,7 +32,7 @@ Independent researcher, Poland\\
 \maketitle
 
 \begin{abstract}
-Decode-time constraints guarantee that a language model's output belongs to a fixed set of well-formed strings. They say nothing about whether the string is true. We measure the gap on a small, fully synthetic task: given a four-world Kripke model and a target world, emit the canonical judgement ``$w_i \models \varphi$ iff TRUE/FALSE'' for a modal formula $\varphi$. Two instruction-tuned models (Qwen2.5-0.5B and 1.5B) are run under five arms: unconstrained, format-prompted, format-prompted with a stricter template, and the two prompted arms with a byte-trie constraint that admits only canonical judgements. The constraint does what it promises. Membership violations fall from 42--114 per 160 fixtures to zero, and strict exact-match rises from 8--26 to 51--52 of 80 in-language fixtures (paired exact McNemar $p<10^{-7}$). That headline is misleading in three ways, all visible once outputs are re-parsed leniently and the constraint set is inspected. First, the constraint set was built from the gold judgements and admits only one truth value for 25 of the 80 fixtures; on those the constraint cannot be wrong. On the 55 fixtures where both truth values are admissible, constrained accuracy is 26/55 and 27/55, indistinguishable from chance (binomial $p=0.79$, $1.00$). Second, each model emits an almost constant truth value regardless of arm: the 0.5B model answers TRUE on 80 of 80 prompted and 55 of 55 free constrained fixtures, the 1.5B model answers FALSE on 73 of 80 and 51 of 55. Per-formula accuracy tracks the gold base rate of that constant, not the formula. Third, under a lenient parser the unconstrained 1.5B model already gets the world and formula right on 79 of 80 fixtures and reaches 42/80 semantic accuracy; strict scoring had reduced it to 25 because of underscores and spaces. Neither model ever abstains on the 80 out-of-language fixtures; the constraint turns every one into a fluent, in-language, spurious judgement. Constrained decoding here converts a coin flip into a syntactically perfect coin flip, and membership-only evaluation cannot tell the difference. We release fixtures, code, cached outputs and the re-analysis, and add a leak-free constraint construction to the pipeline.
+Decode-time constraints guarantee that a language model's output belongs to a fixed set of well-formed strings. They say nothing about whether the string is true. We measure the gap on a small, fully synthetic task: given a four-world Kripke model and a target world, emit the canonical judgement ``$w_i \models \varphi$ iff TRUE/FALSE'' for a modal formula $\varphi$. Two instruction-tuned models (Qwen2.5-0.5B and 1.5B) are run under five arms: unconstrained, format-prompted, format-prompted with a stricter template, and the two prompted arms with a byte-trie constraint that admits only canonical judgements. The constraint does what it promises. Membership violations fall from 42--114 per 160 fixtures to zero, and strict exact-match rises from 8--26 to 51--52 of 80 in-language fixtures (paired exact McNemar $p<10^{-7}$). That headline is wrong in three ways. First, the pipeline built the admissible set from the gold judgements, and that set admits only one truth value for 25 of the 80 fixtures; on the other 55, constrained accuracy is 26/55 and 27/55, chance. A replication with a leak-free admissible set (every world, formula and truth value; 32 strings) drops constrained exact-match to 36/80 and 37/80 and leaves the outputs on the 55 unaffected fixtures byte-identical. Second, each model emits an almost constant truth value regardless of arm: the 0.5B model answers TRUE on 80 of 80 in-language fixtures under the leak-free constraint and 80 of 80 when merely prompted; the 1.5B model answers FALSE on 71 and 70 of 80. Per-formula accuracy tracks the gold base rate of that constant, not the formula. Third, under a lenient parser the unconstrained 1.5B model already gets the world and formula right on 78--79 of 80 fixtures and reaches 41--42/80 semantic accuracy; strict scoring had reduced it to 25 over underscores and spaces. Neither model ever abstains on the 80 out-of-language fixtures; the constraint turns every one into a fluent, in-language, spurious judgement. Constrained decoding here converts a coin flip into a syntactically perfect coin flip, and membership-only evaluation cannot tell the difference. Fixtures, code, both runs' cached outputs and the re-analysis are released.
 \end{abstract}
 
 \section{Introduction}
@@ -48,7 +48,8 @@ We make the following contributions.
   \item A 160-fixture Kripke judgement benchmark with deterministic construction, a canonical output language, and a byte-trie constraint that admits exactly that language, running on the \texttt{transformers} \texttt{LogitsProcessor} interface (Section~\ref{sec:setup}).
   \item Five-arm results for two small instruction-tuned models, with the pipeline's own membership-based scoring (Section~\ref{sec:primary}).
   \item A re-analysis showing that (a) the constraint set leaks the answer on 31\% of fixtures, (b) on the remaining fixtures constrained accuracy is at chance, (c) both models emit a near-constant truth value, and (d) lenient parsing reveals the unconstrained models already produce the right structure (Sections~\ref{sec:leak}--\ref{sec:lenient}).
-  \item A leak-free constraint construction, added to the released pipeline, and a recommended evaluation protocol for constrained decoding on tasks with a semantic ground truth (Section~\ref{sec:discussion}).
+  \item A replication with a leak-free admissible set that confirms the prediction of (a) to the fixture: constrained exact-match falls to 36--37/80, outputs on the unaffected fixtures are unchanged, and the truth-value constant of (c) becomes total for the 0.5B model (Section~\ref{sec:replication}).
+  \item A recommended evaluation protocol for constrained decoding on tasks with a semantic ground truth (Section~\ref{sec:discussion}).
 \end{enumerate}
 
 \section{Related work}
@@ -60,18 +61,18 @@ Guided or constrained decoding restricts the next-token distribution to the cont
 
 \paragraph{Fixtures.} The language has atoms $p$ and $q$, connectives $\neg$ and $\wedge$, and modalities $\Box$ and $\Dia$, written in the prompt as \texttt{NOT}, \texttt{AND}, \texttt{BOX}, \texttt{DIA}. There are five accessibility relations over worlds $w_0..w_3$, four valuations, and four in-language formulas: $\Box p$, $\Dia q$, $\neg\Box\neg p$, and $\Box p \wedge \Dia q$. The Cartesian product gives 80 in-language fixtures; the target world is $w_{(i+j+k) \bmod 4}$ for frame $i$, valuation $j$, formula $k$. Truth is computed by the standard clauses ($\Box\varphi$ true at $w$ iff $\varphi$ true at every $R$-successor of $w$). A second block of 80 fixtures uses the same frames and valuations with formulas containing an atom $r$ that has no valuation ($\Box r$, $\Dia r$, $\neg r$, $p \wedge r$); the prompt says so, and the correct output is the empty string. Gold truth values over the 80 in-language fixtures are 44 FALSE and 36 TRUE, unevenly across formulas: $\neg\Box\neg p$ is TRUE in 18 of 20 cases, $\Box p \wedge \Dia q$ is FALSE in 18 of 20.
 
-\paragraph{Canonical output.} \texttt{w\_i |= FORMULA iff TRUE.} or the same with \texttt{FALSE}, with the formula text exactly as given. The pipeline's admissible set $\mathcal{A}$ is the set of gold judgements of the 80 in-language fixtures. Because several fixtures share a (world, formula) pair, $|\mathcal{A}| = 27$. The consequences of building $\mathcal{A}$ this way are the subject of Section~\ref{sec:leak}.
+\paragraph{Canonical output.} \texttt{w\_i |= FORMULA iff TRUE.} or the same with \texttt{FALSE}, with the formula text exactly as given. The pipeline's original admissible set $\mathcal{A}_{\mathrm{gold}}$ is the set of gold judgements of the 80 in-language fixtures. Because several fixtures share a (world, formula) pair, $|\mathcal{A}_{\mathrm{gold}}| = 27$. The consequences of building it this way are the subject of Section~\ref{sec:leak}. The replication in Section~\ref{sec:replication} uses $\mathcal{A}_{\mathrm{prod}}$, the product of the four worlds, four formulas and two truth values, $|\mathcal{A}_{\mathrm{prod}}| = 32$. We refer to the two runs as the \emph{gold run} and the \emph{product run}, and write $\mathcal{A}$ for whichever set a run uses.
 
-\paragraph{Models and arms.} \texttt{Qwen2.5-0.5B-Instruct} and \texttt{Qwen2.5-1.5B-Instruct}, bfloat16, greedy decoding, at most 64 new tokens, via \texttt{transformers} 4.56 on CUDA. Five arms per model: \emph{naive} (model description, task, the fixture text, and the instruction to output one judgement); \emph{prompted} (adds one line giving the exact format); \emph{prompt\_tuned} (adds a five-line template and an explicit instruction to output empty on out-of-language atoms); \emph{constrained} and \emph{constrained\_tuned} (the two prompted arms plus a logits processor that masks every token not consistent with some string in $\mathcal{A}$, resynchronising to the trie root if the prefix leaves the trie, and admitting EOS only once a full canonical string has been emitted, or immediately for out-of-language fixtures). Prompts are in Appendix~\ref{app:prompt}. Every arm ran on all 160 fixtures; 1,600 outputs in total.
+\paragraph{Models and arms.} \texttt{Qwen2.5-0.5B-Instruct} and \texttt{Qwen2.5-1.5B-Instruct}, bfloat16, greedy decoding, at most 64 new tokens, via \texttt{transformers} 4.56 on CUDA. Five arms per model: \emph{naive} (model description, task, the fixture text, and the instruction to output one judgement); \emph{prompted} (adds one line giving the exact format); \emph{prompt\_tuned} (adds a five-line template and an explicit instruction to output empty on out-of-language atoms); \emph{constrained} and \emph{constrained\_tuned} (the two prompted arms plus a logits processor that masks every token not consistent with some string in $\mathcal{A}$, resynchronising to the trie root if the prefix leaves the trie, and admitting EOS only once a full canonical string has been emitted, or immediately for out-of-language fixtures). Prompts are in Appendix~\ref{app:prompt}. Every arm ran on all 160 fixtures; 1,600 outputs per run. The gold run predates the analysis below; the product run was executed on 2026-09-17, after it, on the same machine, with \texttt{--allowed-set product} and no other change.
 
 \paragraph{Scoring.} A strict regular expression extracts the first canonical judgement (\texttt{w\textbackslash d+}, \texttt{|=}, a formula with no spaces, \texttt{iff}, \texttt{TRUE|FALSE}). Outputs are classed as \emph{exact} (parsed string equals gold), \emph{valid\_wrong\_judgement} (parsed string in $\mathcal{A}$ but not gold), \emph{invented\_schema} (no parse, or parse not in $\mathcal{A}$), \emph{valid\_spurious\_judgement} (in $\mathcal{A}$ on an out-of-language fixture), \emph{abstention} (empty on an in-language fixture) and \emph{correct\_abstain} (empty on an out-of-language fixture). The pipeline reports class counts and an exact McNemar test on strict exact-match between the prompted and constrained arms.
 
-\section{Results as the pipeline reports them}
+\section{Results as the pipeline reports them (gold run)}
 \label{sec:primary}
 
 \begin{table}[t]
 \centering
-\caption{Class counts per model and arm as produced by the pipeline's strict scorer (160 fixtures: 80 in-language, 80 out-of-language). Abstention and correct abstention are zero in every cell and omitted. Membership violations count parsed outputs not in $\mathcal{A}$.}
+\caption{Gold run. Class counts per model and arm as produced by the pipeline's strict scorer (160 fixtures: 80 in-language, 80 out-of-language). Abstention and correct abstention are zero in every cell and omitted. Membership violations count parsed outputs not in $\mathcal{A}_{\mathrm{gold}}$.}
 \label{tab:classes}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
@@ -98,21 +99,21 @@ Table~\ref{tab:classes} and Figure~\ref{fig:classes} give the picture the pipeli
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{figs/class_counts.pdf}
-\caption{Strict migration classes per arm. Constraint arms have no non-canonical outputs and no abstentions; every out-of-language fixture becomes a spurious in-language judgement.}
+\includegraphics[width=\linewidth]{figs/gold_class_counts.pdf}
+\caption{Gold run. Strict migration classes per arm. Constraint arms have no non-canonical outputs and no abstentions; every out-of-language fixture becomes a spurious in-language judgement.}
 \label{fig:classes}
 \end{figure}
 
-If we stopped here, the conclusion would be that a decode-time constraint roughly doubles the accuracy of small models on modal judgement. Three checks show that this is not what happened.
+If we stopped here, the conclusion would be that a decode-time constraint roughly doubles the accuracy of small models on modal judgement. Three checks show that this is not what happened, and a re-run confirms the first of them.
 
 \section{Check 1: the constraint set leaks the answer}
 \label{sec:leak}
 
-$\mathcal{A}$ contains the 27 distinct gold strings. For a fixture with target world $w$ and formula $\varphi$, the constraint admits \texttt{w |= $\varphi$ iff TRUE.} only if some fixture in the set has that gold judgement, and likewise for FALSE. For 5 of the 16 (world, formula) pairs, only one truth value ever occurs in gold: $(w_2, \Box p)$ is always FALSE, $(w_1, \neg\Box\neg p)$ and $(w_2, \neg\Box\neg p)$ always TRUE, $(w_1, \Box p\wedge\Dia q)$ and $(w_2, \Box p\wedge\Dia q)$ always FALSE. Those pairs cover 25 of the 80 in-language fixtures. On them the trie admits exactly one complete string with the target world and formula, and since both models always reproduce the target world and formula under the constraint (80 of 80, Section~\ref{sec:bias}), the constrained arm cannot be wrong. We call these fixtures \emph{forced} and the other 55 \emph{free}.
+$\mathcal{A}_{\mathrm{gold}}$ contains the 27 distinct gold strings. For a fixture with target world $w$ and formula $\varphi$, the constraint admits \texttt{w |= $\varphi$ iff TRUE.} only if some fixture in the set has that gold judgement, and likewise for FALSE. For 5 of the 16 (world, formula) pairs, only one truth value ever occurs in gold: $(w_2, \Box p)$ is always FALSE, $(w_1, \neg\Box\neg p)$ and $(w_2, \neg\Box\neg p)$ always TRUE, $(w_1, \Box p\wedge\Dia q)$ and $(w_2, \Box p\wedge\Dia q)$ always FALSE. Those pairs cover 25 of the 80 in-language fixtures. On them the trie admits exactly one complete string with the target world and formula, and since both models always reproduce the target world and formula under the constraint (80 of 80, Section~\ref{sec:bias}), the constrained arm cannot be wrong. We call these fixtures \emph{forced} and the other 55 \emph{free}.
 
 \begin{table}[t]
 \centering
-\caption{In-language accuracy split by whether the trie admits both truth values. Constrained arms use strict exact-match; unconstrained arms use the lenient parser of Section~\ref{sec:lenient}. Two-sided binomial $p$ against 0.5 on the free set.}
+\caption{Gold run. In-language accuracy split by whether the trie admits both truth values. Constrained arms use strict exact-match; unconstrained arms use the lenient parser of Section~\ref{sec:lenient}. Two-sided binomial $p$ against 0.5 on the free set.}
 \label{tab:forcedfree}
 \small
 \begin{tabular}{llrrrr}
@@ -136,26 +137,59 @@ Table~\ref{tab:forcedfree} and Figure~\ref{fig:forcedfree} split the in-language
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.92\linewidth]{figs/forced_vs_free.pdf}
-\caption{Semantic accuracy on forced fixtures (only one truth value admissible) and free fixtures (both admissible). Dotted line: chance. Constrained decoding is perfect where it cannot be wrong and at chance where it can.}
+\includegraphics[width=0.92\linewidth]{figs/gold_forced_vs_free.pdf}
+\caption{Gold run. Semantic accuracy on forced fixtures (only one truth value admissible) and free fixtures (both admissible). Dotted line: chance. Constrained decoding is perfect where it cannot be wrong and at chance where it can.}
 \label{fig:forcedfree}
 \end{figure}
 
-The leak is a construction error, not a property of constrained decoding. The admissible set should have been the full product of worlds, formulas and truth values (32 strings), or, equivalently, the gold strings together with their truth-value complements. We have added that construction to the pipeline as \texttt{--allowed-set product} (Section~\ref{sec:repro}); the experiments in this paper were not re-run with it, and the forced/free split above is the correction we can make from the cached outputs.
+The leak is a construction error, not a property of constrained decoding. The admissible set should have been the full product of worlds, formulas and truth values, or, equivalently, the gold strings together with their truth-value complements. If the analysis above is right, replacing $\mathcal{A}_{\mathrm{gold}}$ with that set should cost the constrained arms about 15 exact matches (the 25 forced fixtures falling from certain to chance) and change nothing on the 55 free fixtures, where both truth values were already admissible.
+
+\section{Replication with a leak-free admissible set}
+\label{sec:replication}
+
+We added \texttt{--allowed-set product} to the runner and re-ran all five arms on both models with $\mathcal{A}_{\mathrm{prod}}$ (32 strings), same machine, same seeds, greedy decoding. Table~\ref{tab:replication} compares the two runs.
+
+\begin{table}[t]
+\centering
+\caption{Gold run versus product run, in-language fixtures ($n{=}80$). ``Old forced'' and ``old free'' are the 25 and 55 fixtures of Section~\ref{sec:leak}, which are all free under $\mathcal{A}_{\mathrm{prod}}$. ``Identical'' counts fixtures whose constrained output is byte-identical across the two runs.}
+\label{tab:replication}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llrrrrrr}
+\toprule
+ & & \multicolumn{2}{c}{strict exact} & \multicolumn{2}{c}{old forced (25)} & old free (55) & identical \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Model & Arm & gold & product & gold & product & product & old free \\
+\midrule
+0.5B & constrained & 51 & 36 & 25 & 10 & 26 & 55/55 \\
+0.5B & constrained\_tuned & 51 & 36 & 25 & 10 & 26 & 55/55 \\
+1.5B & constrained & 52 & 37 & 25 & 10 & 27 & 55/55 \\
+1.5B & constrained\_tuned & 52 & 38 & 25 & 12 & 26 & 54/55 \\
+\midrule
+0.5B & prompted (lenient) & 28 & 29 & 10 & 10 & 19 & 51/55 \\
+1.5B & naive (lenient) & 42 & 41 & 12 & 4 & 30 & 44/55 \\
+1.5B & prompted (lenient) & 40 & 36 & 13 & 0 & 23 & 43/55 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The prediction holds to the fixture. Constrained exact-match falls from 51 to 36 (0.5B) and from 52 to 37 (1.5B). On the 55 fixtures where the leak never applied, the constrained outputs of both models are byte-identical across runs, and the accuracy is the same 26/55 and 27/55. On the 25 formerly forced fixtures, accuracy falls from 25/25 to 10/25 in both models, which is what the model's constant truth value earns there (10 of those 25 are TRUE in gold, and the 0.5B model says TRUE). Overall constrained accuracy under the leak-free set is 36/80 and 37/80, binomial $p$ against 0.5 of 0.43 and 0.58. The pipeline's McNemar test still returns $p=0.004$ and $p=5\times10^{-10}$ in favour of the constraint, because the prompted arm is still scored on strict format; the free-set comparison between lenient prompted and constrained is 0 versus 7 (0.5B) and 3 versus 4 (1.5B) discordant fixtures.
+
+Two things the replication adds that the re-analysis could not. The 0.5B model, freed from the leak, says TRUE on 80 of 80 in-language fixtures under the constraint, which is exactly what it says without the constraint (Section~\ref{sec:bias}); the 15 FALSE answers in the gold run were all forced. And the unconstrained arms are not perfectly reproducible between the two runs: 7 to 36 of 160 outputs per arm differ, with lenient exact-match moving by at most 4 of 80 (1.5B prompted, 40 to 36). Greedy decoding in bfloat16 is deterministic on one machine and one load order, and not across a model reload with a different second model resident; we treat differences of this size as run noise, and note that the constrained outputs on the free set showed none of it.
 
 \section{Check 2: the truth value is a constant}
 \label{sec:bias}
 
-The free-set numbers are not merely at chance; they are at chance for a specific reason. Figure~\ref{fig:bias} shows the distribution of the emitted truth value on the 55 free fixtures. The 0.5B model answers TRUE on 55 of 55 under the constraint and on 80 of 80 in-language fixtures under the prompted arm. The 1.5B model answers FALSE on 51 of 55 under the constraint, and on 73 of 80 prompted and 75 of 80 naive. The constant is a property of the model, not of the arm: the constraint does not change which truth value the model prefers, it only guarantees that the preference is spelled correctly.
+The free-set numbers are not merely at chance; they are at chance for a specific reason. Figure~\ref{fig:bias} shows the distribution of the emitted truth value over the 80 in-language fixtures in the product run. The 0.5B model answers TRUE on 80 of 80 under the constraint and on 80 of 80 under the prompted arm. The 1.5B model answers FALSE on 71 of 80 under the constraint, 70 of 80 prompted and 74 of 80 naive. In the gold run the same holds on the free fixtures (55 of 55 TRUE; 51 of 55 FALSE). The constant is a property of the model, not of the arm: the constraint does not change which truth value the model prefers, it only guarantees that the preference is spelled correctly.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.62\linewidth]{figs/truth_value_bias.pdf}
-\caption{Emitted truth value on the 55 free fixtures. Gold is 26 TRUE / 29 FALSE. The 0.5B model says TRUE; the 1.5B model says FALSE; the arm barely matters.}
+\includegraphics[width=0.62\linewidth]{figs/product_truth_value_bias.pdf}
+\caption{Product run. Emitted truth value on the 80 in-language fixtures. Gold is 36 TRUE / 44 FALSE. The 0.5B model says TRUE; the 1.5B model says FALSE; the arm barely matters.}
 \label{fig:bias}
 \end{figure}
 
-This explains the per-formula pattern, which would otherwise look like partial understanding. On the 0.5B model, constrained accuracy is 18/20 on $\neg\Box\neg p$ and 8/20 on $\Box p$; on the 1.5B model it is 16/20 on $\Box p\wedge\Dia q$, 17/20 on $\Box p$ and 7/20 on $\Dia q$. Every one of these numbers is the gold base rate of the model's constant: $\neg\Box\neg p$ is TRUE 18 of 20 times and the 0.5B model says TRUE; $\Box p\wedge\Dia q$ is FALSE 18 of 20 times and the 1.5B model says FALSE. A model that had learned that $\Dia$ statements are usually satisfiable in dense frames would show the same profile. So would one that had learned nothing. The fixture design, with its skewed truth distribution per formula, cannot distinguish them, and neither can accuracy.
+This explains the per-formula pattern, which would otherwise look like partial understanding. In the gold run, constrained accuracy on the 0.5B model is 18/20 on $\neg\Box\neg p$ and 8/20 on $\Box p$; on the 1.5B model it is 16/20 on $\Box p\wedge\Dia q$, 17/20 on $\Box p$ and 7/20 on $\Dia q$. Every one of these numbers is the gold base rate of the model's constant: $\neg\Box\neg p$ is TRUE 18 of 20 times and the 0.5B model says TRUE; $\Box p\wedge\Dia q$ is FALSE 18 of 20 times and the 1.5B model says FALSE. A model that had learned that $\Dia$ statements are usually satisfiable in dense frames would show the same profile. So would one that had learned nothing. The fixture design, with its skewed truth distribution per formula, cannot distinguish them, and neither can accuracy.
 
 \section{Check 3: the parser was doing most of the work}
 \label{sec:lenient}
@@ -164,7 +198,7 @@ The strict scorer requires \texttt{w0}, not \texttt{w\_0}; \texttt{AND(BOX(p),DI
 
 \begin{table}[t]
 \centering
-\caption{In-language fixtures ($n{=}80$): strict versus lenient parsing. ``W+F right'' is the number of outputs whose world and formula match the target under the lenient parser; ``truth right $\mid$ W+F'' is semantic accuracy among those.}
+\caption{Gold run, in-language fixtures ($n{=}80$): strict versus lenient parsing. ``W+F right'' is the number of outputs whose world and formula match the target under the lenient parser; ``truth right $\mid$ W+F'' is semantic accuracy among those.}
 \label{tab:lenient}
 \small
 \begin{tabular}{llrrrr}
@@ -184,38 +218,38 @@ Model & Arm & strict exact & lenient exact & W+F right & truth right $\mid$ W+F 
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:lenient} shows what the lenient parser changes. On the 1.5B model, prompted strict exact-match of 8/80 becomes 40/80; the naive arm's 25 becomes 42. The model was producing the right world and formula on 78--79 of 80 fixtures all along. The thing it was not producing was the right truth value, at 40--42 of 78--79, which is the same coin as under the constraint. On the free set, lenient prompted versus constrained is 2 versus 2 discordant fixtures on the 1.5B model (McNemar $p=1.0$), and 0 versus 8 on the 0.5B (\,$p=0.008$), the latter because the 0.5B model without the constraint sometimes drops the world or mangles the formula, not because its truth values improve.
+Table~\ref{tab:lenient} shows what the lenient parser changes in the gold run (the product run gives 41 and 36 for the 1.5B naive and prompted arms, within run noise). On the 1.5B model, prompted strict exact-match of 8/80 becomes 40/80; the naive arm's 25 becomes 42. The model was producing the right world and formula on 78--79 of 80 fixtures all along. The thing it was not producing was the right truth value, at 40--42 of 78--79, which is the same coin as under the constraint. On the free set, lenient prompted versus constrained is 2 versus 2 discordant fixtures on the 1.5B model (McNemar $p=1.0$), and 0 versus 8 on the 0.5B (\,$p=0.008$), the latter because the 0.5B model without the constraint sometimes drops the world or mangles the formula, not because its truth values improve.
 
 Strict membership scoring therefore reported a format problem as a semantics problem and credited the constraint with fixing semantics. The only thing the constraint fixed was the format, which a four-line regex would also have fixed, without touching the decoder.
 
 \section{Abstention never happens}
 \label{sec:abstain}
 
-The 80 out-of-language fixtures test whether a model will decline to judge a formula whose atom has no valuation. The prompt says the atom is outside the language; the tuned prompt says explicitly to output empty. No arm of either model produced an empty output on any of the 80 fixtures, and none on the 80 in-language ones either. Under the constraint, EOS is admissible at step zero for these fixtures, so abstention was available; the models never took it. Instead the constrained arms produce a canonical judgement about $p$ or $q$ on every out-of-language fixture, always with the target world, cycling through the four in-language formulas, since $\mathcal{A}$ contains nothing mentioning $r$. The unconstrained arms at least mention $r$ (54--80 of 80), which a downstream check could catch. The constrained output is fluent, in-language, and about the wrong formula. This is the sharpest form of the problem: the constraint does not just fail to add semantics, it removes the surface evidence that the semantics went wrong.
+The 80 out-of-language fixtures test whether a model will decline to judge a formula whose atom has no valuation. The prompt says the atom is outside the language; the tuned prompt says explicitly to output empty. No arm of either model produced an empty output on any of the 80 fixtures, and none on the 80 in-language ones either, in either run (3,200 outputs). Under the constraint, EOS is admissible at step zero for these fixtures, so abstention was available; the models never took it. Instead the constrained arms produce a canonical judgement about $p$ or $q$ on every out-of-language fixture, always with the target world, cycling through the four in-language formulas, since neither admissible set contains anything mentioning $r$. The unconstrained arms at least mention $r$ (54--80 of 80 in the gold run), which a downstream check could catch. The constrained output is fluent, in-language, and about the wrong formula. This is the sharpest form of the problem: the constraint does not just fail to add semantics, it removes the surface evidence that the semantics went wrong.
 
 \section{Discussion}
 \label{sec:discussion}
 
-\paragraph{What the constraint bought.} Zero membership violations, zero format violations, and roughly 0.05--0.08 seconds of overhead per item. That is a real engineering benefit if the downstream consumer needs parseable strings. It is not a reasoning benefit, and on this task there was no reasoning to preserve: both models were at chance on the truth value before the constraint and stayed there after it.
+\paragraph{What the constraint bought.} Zero membership violations, zero format violations, and roughly 0.05--0.08 seconds of overhead per item. That is a real engineering benefit if the downstream consumer needs parseable strings. It is not a reasoning benefit, and on this task there was no reasoning to preserve: both models were at chance on the truth value before the constraint and stayed there after it, in both runs.
 
 \paragraph{What the scorer bought.} An apparently large, apparently significant effect. The membership-based scorer conflates three failures (wrong format, wrong structure, wrong truth value) into one class and then rewards the arm that cannot commit the first two. The paired McNemar test inherits the conflation. Nothing about the statistics was wrong; the outcome variable was.
 
-\paragraph{Evaluation protocol.} For constrained decoding on a task with a semantic ground truth, we suggest four checks, all cheap. (1) Build the admissible set from the task's output space, not from the gold labels, and verify that every fixture admits more than one answer. (2) Report accuracy on the subset where the constraint leaves the answer open. (3) Report the marginal distribution of the emitted answer against the gold marginal; a model that beats chance by matching the base rate should be caught here. (4) Score unconstrained arms with a parser as lenient as the task allows, so that the constraint is credited only for what it changes in content. Applying (1)--(4) to our own pipeline turns a ``constrained decoding doubles accuracy'' result into ``constrained decoding changes nothing but the spelling''.
+\paragraph{Evaluation protocol.} For constrained decoding on a task with a semantic ground truth, we suggest four checks, all cheap. (1) Build the admissible set from the task's output space, not from the gold labels, and verify that every fixture admits more than one answer. (2) Report accuracy on the subset where the constraint leaves the answer open. (3) Report the marginal distribution of the emitted answer against the gold marginal; a model that beats chance by matching the base rate should be caught here. (4) Score unconstrained arms with a parser as lenient as the task allows, so that the constraint is credited only for what it changes in content. Applying (1)--(4) to our own pipeline turns a ``constrained decoding doubles accuracy'' result into ``constrained decoding changes nothing but the spelling'', and re-running with (1) fixed confirmed it.
 
 \paragraph{On the models.} Sub-2B instruction-tuned models do not evaluate modal formulas over explicit Kripke models given in the prompt, at least not zero-shot with greedy decoding. They reproduce the structure of the question and attach a default truth value. Whether this changes with chain-of-thought, few-shot examples, or larger models is not tested here. We would expect the first two to help, since the semantics is a short recursive computation over a table that is in the context window.
 
 \section{Limitations}
 
-The benchmark is small (160 fixtures, 16 world-formula pairs) and the formulas are shallow (modal depth at most one, except $\neg\Box\neg p$). Truth values are skewed per formula, which is why base-rate matching is hard to separate from understanding; a balanced construction is straightforward and should be preferred. Two models, one family, greedy decoding, one prompt style per arm. The leak-free admissible set was added to the code but not run; the forced/free analysis is a post hoc correction on cached outputs, not a replication. The lenient parser is our own and could be made stricter or looser; the numbers in Table~\ref{tab:lenient} would move a little but the truth-value column would not. Timing numbers are from a single GPU run and are indicative only.
+The benchmark is small (160 fixtures, 16 world-formula pairs) and the formulas are shallow (modal depth at most one, except $\neg\Box\neg p$). Truth values are skewed per formula, which is why base-rate matching is hard to separate from understanding; a balanced construction is straightforward and should be preferred. Two models, one family, greedy decoding, one prompt style per arm. The replication is one run on one machine; the run-to-run differences in the unconstrained arms (up to 4 of 80 lenient exact matches) put a floor on how finely any two arms can be compared here. The lenient parser is our own and could be made stricter or looser; the numbers in Table~\ref{tab:lenient} would move a little but the truth-value column would not. Timing numbers are from a single GPU run and are indicative only.
 
 \section{Conclusion}
 
-A byte-trie constraint on two small Qwen2.5 models produced perfectly canonical Kripke judgements and, by the pipeline's own scorer, doubled exact-match accuracy with $p<10^{-7}$. On inspection, 25 of the 80 in-language fixtures admitted only one truth value under the constraint; on the other 55 the constrained arms were at chance; each model emitted a near-constant truth value in every arm; and lenient parsing showed the unconstrained models already had the structure right. The constraint changed the spelling of a guess. Evaluation of constrained decoding should split fixtures by whether the constraint leaves the answer open, compare emitted marginals against gold marginals, and parse unconstrained outputs leniently before crediting the decoder with anything semantic.
+A byte-trie constraint on two small Qwen2.5 models produced perfectly canonical Kripke judgements and, by the pipeline's own scorer, doubled exact-match accuracy with $p<10^{-7}$. On inspection, 25 of the 80 in-language fixtures admitted only one truth value under the constraint; on the other 55 the constrained arms were at chance; each model emitted a near-constant truth value in every arm; and lenient parsing showed the unconstrained models already had the structure right. A re-run with a leak-free admissible set dropped constrained accuracy to 36/80 and 37/80 and left the 55 unaffected fixtures byte-identical. The constraint changed the spelling of a guess. Evaluation of constrained decoding should split fixtures by whether the constraint leaves the answer open, compare emitted marginals against gold marginals, and parse unconstrained outputs leniently before crediting the decoder with anything semantic.
 
 \section*{Reproducibility}
 \label{sec:repro}
 
-Fixtures, the trie constraint, the \texttt{transformers} binding, the runner, the scorer, all 1,600 cached outputs with constraint traces, and the re-analysis script (\texttt{src/analysis\_paper.py}, which writes \texttt{outputs/paper\_stats.json} and every figure here) are at \url{https://github.com/th00masml/kripke-modal-accessibility} \citep{nawara2026kripke}. Fixtures are synthetic and released under CC0. \texttt{run.py --allowed-set product} builds the leak-free admissible set of 32 strings; the cached run used the default \texttt{gold} construction described in Section~\ref{sec:leak}. Re-running the analysis needs NumPy and Matplotlib and takes seconds.
+Fixtures, the trie constraint, the \texttt{transformers} binding, the runner, the scorer, the cached outputs of both runs (\texttt{outputs/gold/}, \texttt{outputs/product/}) and the re-analysis script (\texttt{src/analysis\_paper.py --run gold|product}, which writes \texttt{paper\_stats.json} and every figure here) are at \url{https://github.com/th00masml/kripke-modal-accessibility} \citep{nawara2026kripke}. Fixtures are synthetic and released under CC0. \texttt{run.py --allowed-set product} builds the leak-free admissible set; the default \texttt{gold} reproduces the original construction. Re-running the analysis needs NumPy and Matplotlib and takes seconds.
 
 \bibliographystyle{plainnat}
 \bibliography{refs}
@@ -255,11 +289,11 @@ The literal \texttt{w\_i} in the instruction is the likely source of the 1.5B mo
 
 \section{Constraint mechanics}
 
-The admissible set is loaded into a byte trie. At each decoding step the processor reads the generated tokens from \texttt{input\_ids}, decodes them to bytes, walks the trie, and admits every vocabulary token whose byte string is a valid continuation. If the prefix has left the trie and no complete string has been produced, the walk restarts from the root (this never fired in the cached run). EOS is admitted once a terminal node is reached, or from step zero when \texttt{allow\_empty\_output} is set for an out-of-language fixture. Every call is traced (\texttt{allowed}, \texttt{generated\_len}, \texttt{prefix\_bytes}); the runner aborts if the trace shows no generated context after step zero, a guard added after an earlier MLX backend failed to expose generated tokens to the processor. Mean overhead per fixture was 0.07 s (0.5B) and 0.05 s (1.5B) on top of 0.27 s and 0.36 s of generation.
+The admissible set is loaded into a byte trie. At each decoding step the processor reads the generated tokens from \texttt{input\_ids}, decodes them to bytes, walks the trie, and admits every vocabulary token whose byte string is a valid continuation. If the prefix has left the trie and no complete string has been produced, the walk restarts from the root (this never fired in either run). EOS is admitted once a terminal node is reached, or from step zero when \texttt{allow\_empty\_output} is set for an out-of-language fixture. Every call is traced (\texttt{allowed}, \texttt{generated\_len}, \texttt{prefix\_bytes}); the runner aborts if the trace shows no generated context after step zero, a guard added after an earlier MLX backend failed to expose generated tokens to the processor. Mean overhead per fixture was 0.07 s (0.5B) and 0.05 s (1.5B) on top of 0.27 s and 0.36 s of generation.
 
 \section{Forced fixtures}
 
-The five (world, formula) pairs whose gold judgement has a single truth value across all frames and valuations, and hence a single admissible string in $\mathcal{A}$:
+The five (world, formula) pairs whose gold judgement has a single truth value across all frames and valuations, and hence a single admissible string in $\mathcal{A}_{\mathrm{gold}}$:
 \begin{center}\small
 \begin{tabular}{llll}
 \toprule
