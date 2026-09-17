@@ -1,0 +1,186 @@
+{
+  "total": 1600,
+  "by_model_arm": {
+    "Qwen/Qwen2.5-0.5B-Instruct::naive": {
+      "invented_schema": 159,
+      "valid_wrong_judgement": 1
+    },
+    "Qwen/Qwen2.5-0.5B-Instruct::prompted": {
+      "valid_wrong_judgement": 25,
+      "exact": 27,
+      "invented_schema": 108
+    },
+    "Qwen/Qwen2.5-0.5B-Instruct::constrained": {
+      "valid_wrong_judgement": 44,
+      "exact": 36,
+      "valid_spurious_judgement": 80
+    },
+    "Qwen/Qwen2.5-0.5B-Instruct::prompt_tuned": {
+      "valid_wrong_judgement": 22,
+      "invented_schema": 119,
+      "exact": 19
+    },
+    "Qwen/Qwen2.5-0.5B-Instruct::constrained_tuned": {
+      "valid_wrong_judgement": 44,
+      "exact": 36,
+      "valid_spurious_judgement": 80
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::naive": {
+      "exact": 25,
+      "valid_wrong_judgement": 33,
+      "invented_schema": 102
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::prompted": {
+      "invented_schema": 147,
+      "valid_wrong_judgement": 8,
+      "exact": 5
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::constrained": {
+      "exact": 37,
+      "valid_wrong_judgement": 43,
+      "valid_spurious_judgement": 80
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::prompt_tuned": {
+      "invented_schema": 160
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::constrained_tuned": {
+      "exact": 38,
+      "valid_wrong_judgement": 42,
+      "valid_spurious_judgement": 80
+    }
+  },
+  "diagnostics_by_model_arm": {
+    "Qwen/Qwen2.5-0.5B-Instruct::naive": {
+      "membership_violations": 0,
+      "format_violations": 159,
+      "canonical_found": 1
+    },
+    "Qwen/Qwen2.5-0.5B-Instruct::prompted": {
+      "membership_violations": 106,
+      "format_violations": 2,
+      "canonical_found": 158
+    },
+    "Qwen/Qwen2.5-0.5B-Instruct::constrained": {
+      "membership_violations": 0,
+      "format_violations": 0,
+      "canonical_found": 160
+    },
+    "Qwen/Qwen2.5-0.5B-Instruct::prompt_tuned": {
+      "membership_violations": 103,
+      "format_violations": 16,
+      "canonical_found": 144
+    },
+    "Qwen/Qwen2.5-0.5B-Instruct::constrained_tuned": {
+      "membership_violations": 0,
+      "format_violations": 0,
+      "canonical_found": 160
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::naive": {
+      "membership_violations": 38,
+      "format_violations": 64,
+      "canonical_found": 96
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::prompted": {
+      "membership_violations": 32,
+      "format_violations": 115,
+      "canonical_found": 45
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::constrained": {
+      "membership_violations": 0,
+      "format_violations": 0,
+      "canonical_found": 160
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::prompt_tuned": {
+      "membership_violations": 0,
+      "format_violations": 160,
+      "canonical_found": 0
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::constrained_tuned": {
+      "membership_violations": 0,
+      "format_violations": 0,
+      "canonical_found": 160
+    }
+  },
+  "coverage": {
+    "Qwen/Qwen2.5-0.5B-Instruct::naive": {
+      "observed_rows": 160,
+      "expected_rows": 160,
+      "status": "present",
+      "reason": ""
+    },
+    "Qwen/Qwen2.5-0.5B-Instruct::prompted": {
+      "observed_rows": 160,
+      "expected_rows": 160,
+      "status": "present",
+      "reason": ""
+    },
+    "Qwen/Qwen2.5-0.5B-Instruct::constrained": {
+      "observed_rows": 160,
+      "expected_rows": 160,
+      "status": "present",
+      "reason": ""
+    },
+    "Qwen/Qwen2.5-0.5B-Instruct::prompt_tuned": {
+      "observed_rows": 160,
+      "expected_rows": 160,
+      "status": "present",
+      "reason": ""
+    },
+    "Qwen/Qwen2.5-0.5B-Instruct::constrained_tuned": {
+      "observed_rows": 160,
+      "expected_rows": 160,
+      "status": "present",
+      "reason": ""
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::naive": {
+      "observed_rows": 160,
+      "expected_rows": 160,
+      "status": "present",
+      "reason": ""
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::prompted": {
+      "observed_rows": 160,
+      "expected_rows": 160,
+      "status": "present",
+      "reason": ""
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::constrained": {
+      "observed_rows": 160,
+      "expected_rows": 160,
+      "status": "present",
+      "reason": ""
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::prompt_tuned": {
+      "observed_rows": 160,
+      "expected_rows": 160,
+      "status": "present",
+      "reason": ""
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct::constrained_tuned": {
+      "observed_rows": 160,
+      "expected_rows": 160,
+      "status": "present",
+      "reason": ""
+    }
+  },
+  "missing_arms": [],
+  "non_present_arms": [],
+  "paired_mcnemar": {
+    "Qwen/Qwen2.5-0.5B-Instruct": {
+      "paired_count": 160,
+      "prompted_only_correct": 0,
+      "constrained_only_correct": 9,
+      "pvalue": 0.00390625,
+      "status": "ok",
+      "reason": ""
+    },
+    "Qwen/Qwen2.5-1.5B-Instruct": {
+      "paired_count": 160,
+      "prompted_only_correct": 0,
+      "constrained_only_correct": 32,
+      "pvalue": 4.656612873077393e-10,
+      "status": "ok",
+      "reason": ""
+    }
+  }
+}
