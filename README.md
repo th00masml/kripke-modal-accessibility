@@ -33,11 +33,30 @@ context - unlike the earlier MLX-based path (see below).
 - outputs/raw.jsonl
 - outputs/scored.jsonl
 - outputs/summary.json
-- RESULTS.md
+- outputs/paper_stats.json  (from src/analysis_paper.py)
+- results_stating.md
 
 ## Why this is interesting
 
 This benchmark probes the gap between formal output validity and true semantic correctness in Kripke models.
+
+## Result in one paragraph
+
+The trie constraint drives membership and format violations to zero and
+doubles strict exact-match. The re-analysis in `results_stating.md` and
+`paper/` shows why that is not a semantic gain: the admissible set was built
+from gold judgements and admits only one truth value on 25/80 in-language
+fixtures; on the other 55 the constrained arms are at chance (26/55, 27/55);
+each model emits a near-constant truth value in every arm (0.5B: TRUE,
+1.5B: FALSE); and a lenient parser shows the unconstrained 1.5B model already
+had world and formula right on 79/80. Nobody abstains on out-of-language
+fixtures, ever. `run.py --allowed-set product` builds a leak-free admissible
+set; it has not been run yet.
+
+## Preprint
+
+`paper/main.tex` + `paper/refs.bib` + `paper/figs/`. Every number in it is
+recomputed by `src/analysis_paper.py` (writes `outputs/paper_stats.json`).
 
 ## Backend history
 

@@ -22,5 +22,6 @@
   "overwrite": false,
   "limit": null,
   "backend": "torch",
-  "device": "cuda"
+  "device": "cuda",
+  "allowed_set": "gold"
 }

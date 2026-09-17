@@ -16,7 +16,6 @@ FIXTURES = ROOT / "data" / "fixtures.jsonl"
 RUN_META = ROOT / "outputs" / "run_meta.json"
 
 ARMS = ["naive", "prompted", "constrained", "prompt_tuned", "constrained_tuned"]
-ARMS = ["naive", "prompted", "constrained", "prompt_tuned", "constrained_tuned"]
 
 CANONICAL_RE = re.compile(
     r"(w\d+)\s*\|=\s*([A-Za-z0-9_(),]+)\s*iff\s*(TRUE|FALSE)\.?",
@@ -75,7 +74,14 @@ def main() -> None:
     raw = read_jsonl(RAW)
     fixtures = read_jsonl(FIXTURES)
     run_meta = json.loads(RUN_META.read_text()) if RUN_META.exists() else {}
-    allowed = {row["gold"] for row in fixtures if row["present"] and row["gold"]}
+    allowed_mode = run_meta.get("allowed_set", "gold")
+    if allowed_mode == "product":
+        present = [row for row in fixtures if row["present"] and row["gold"]]
+        worlds = sorted({row["world"] for row in present})
+        formulas = sorted({row["formula"] for row in present})
+        allowed = {f"{w} |= {f} iff {t}." for w in worlds for f in formulas for t in ("TRUE", "FALSE")}
+    else:
+        allowed = {row["gold"] for row in fixtures if row["present"] and row["gold"]}
 
     by_model_arm = defaultdict(Counter)
     diagnostics_by_model_arm = defaultdict(Counter)

@@ -86,7 +86,28 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--skip-constrained", action="store_true")
     parser.add_argument("--write-meta-only", action="store_true")
+    parser.add_argument(
+        "--allowed-set",
+        choices=["gold", "product"],
+        default="gold",
+        help=(
+            "How to build the constraint's admissible set. 'gold' (default, used in the "
+            "2026-09 cached run) = the gold judgements of in-language fixtures; this admits "
+            "only ONE truth value for (world, formula) pairs whose gold is constant across "
+            "frames and valuations, and therefore leaks the answer on 25/80 fixtures. "
+            "'product' = every world x formula x truth value (32 strings); leak-free."
+        ),
+    )
     return parser.parse_args()
+
+
+def build_allowed_set(fixtures: list[dict], mode: str) -> set[str]:
+    present = [row for row in fixtures if row["present"] and row["gold"]]
+    if mode == "gold":
+        return {row["gold"] for row in present}
+    worlds = sorted({row["world"] for row in present})
+    formulas = sorted({row["formula"] for row in present})
+    return {f"{w} |= {f} iff {t}." for w in worlds for f in formulas for t in ("TRUE", "FALSE")}
 
 
 def main() -> None:
@@ -110,6 +131,7 @@ def main() -> None:
                 "limit": args.limit,
                 "backend": "torch",
                 "device": DEVICE,
+                "allowed_set": args.allowed_set,
             },
             indent=2,
         )
@@ -127,7 +149,8 @@ def main() -> None:
     if args.overwrite and OUT.exists():
         OUT.unlink()
 
-    allowed_set = {row["gold"] for row in read_jsonl(FIXTURES) if row["present"] and row["gold"]}
+    allowed_set = build_allowed_set(read_jsonl(FIXTURES), args.allowed_set)
+    print(f"allowed set: mode={args.allowed_set} size={len(allowed_set)}")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     with OUT.open("a") as out:

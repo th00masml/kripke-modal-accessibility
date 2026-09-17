@@ -1,6 +1,12 @@
-﻿.venv/
+.venv/
 .venv2/
 __pycache__/
 *.pyc
 .DS_Store
 run_log.txt
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.blg
+paper/*.bbl
+paper/*.pdf
