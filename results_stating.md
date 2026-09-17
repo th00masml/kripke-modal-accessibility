@@ -119,7 +119,13 @@ Same machine, same seeds, greedy. `src/analysis_paper.py --run product`.
 | 1.5B | constrained_tuned | 52 -> 38 | 25 -> 12 | 26 | 54/55 |
 
 Exactly the predicted ~15-point drop, all of it on the formerly forced
-fixtures; byte-identical outputs where the leak never applied. Under the
+fixtures; byte-identical outputs where the leak never applied.
+
+The 10/25 on the 1.5B model is a coincidence, not a confirmation: a constant
+FALSE would earn 15 there. The model says FALSE on 20 and TRUE on 5, and all
+five departures are wrong. Over all 80 in-language fixtures it departs from
+FALSE nine times, all on `AND(BOX(p),DIA(q))`, and is right once. Its
+deviations from the constant are anti-correlated with truth. Under the
 leak-free set constrained accuracy is 36/80 and 37/80 (binomial p vs 0.5:
 0.43, 0.58). The 0.5B model now says TRUE on 80/80 under the constraint; the
 15 FALSE answers in the gold run were all forced. The pipeline's McNemar
